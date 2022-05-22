@@ -12,6 +12,9 @@ from models import Resnet
 from metrics import BalancedAccuracy
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATASET_ROOT = os.path.join(ROOT, 'datasets')
+
+overfit = False
 model_cfg = Resnet50Config(in_channels=3, out_features=12)
 cfg = Config(ROOT_DIR=ROOT, dataset_name='AlmostCifar', model_name='Resnet50',
              batch_size=128, lr=0.01, debug=True, show_each=100, device='cuda')
@@ -34,19 +37,26 @@ transforms = {train_key: transforms.Compose([transforms.RandomResizedCrop(224),
                                              transforms.CenterCrop(224),
                                              *norm])}
 
-datasets_dict = {train_key: datasets.ImageFolder(root=os.path.join(ROOT, 'datasets', train_key),
+datasets_dict = {train_key: datasets.ImageFolder(root=os.path.join(DATASET_ROOT, train_key),
                                                  transform=transforms[train_key]),
-                 valid_key: datasets.ImageFolder(root=os.path.join(ROOT, 'datasets', valid_key),
+                 valid_key: datasets.ImageFolder(root=os.path.join(DATASET_ROOT, valid_key),
                                                  transform=transforms[valid_key])}
 
+if overfit:
+    shuffle = False
+    for dataset in datasets_dict.values():
+        dataset.set_overfit_mode(cfg.batch_size)
+else:
+    shuffle = True
+
 dataloaders = {train_key: DataLoader(datasets_dict[train_key],
-                                     batch_size=cfg.batch_size, shuffle=True),
+                                     batch_size=cfg.batch_size, shuffle=shuffle),
                valid_key: DataLoader(datasets_dict[valid_key],
                                      batch_size=cfg.batch_size)}
 
-model = Resnet(model_cfg)
-model.cuda()
-#weight decay
+model = Resnet(model_cfg).to(cfg.device)
+
+# weight decay
 wd_params, no_wd_params = model.split_params4weight_decay()
 params = [dict(params=wd_params, weight_decay=1e-4),
           dict(params=no_wd_params)]
@@ -67,7 +77,7 @@ epoch_manager = EpochManager(model=model,
                              metrics=metrics,
                              phase_keys=PhaseKeysDict(train_key, valid_key, test_key))
 
-epochs = 500
+epochs = 20
 
 for epoch in range(epochs):
     epoch_manager.train(epoch)

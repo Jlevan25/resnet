@@ -121,10 +121,11 @@ class EpochManager(object):
             values = metric(is_epoch, *batch).tolist()
             metric_name = type(metric).__name__
 
-            for cls, scalar in (zip(self.classes, values) if hasattr(self, 'classes') else enumerate(values)):
-                self.writer.add_scalar(f'{phase}/{metric_name}/{cls}', scalar, self._global_step[phase])
+            if len(values) > 1:
+                for cls, scalar in (zip(self.classes, values) if hasattr(self, 'classes') else enumerate(values)):
+                    self.writer.add_scalar(f'{phase}/{metric_name}/{cls}', scalar, self._global_step[phase])
 
-            self.writer.add_scalar(f'{phase}/{metric_name}/overall',
+            self.writer.add_scalar(f'{phase}/{metric_name}/average',
                                    sum(values) / len(values), self._global_step[phase])
 
             if debug:

@@ -10,7 +10,6 @@ class CustomImageFolder(ImageFolder):
                  target_transform: Optional[Callable] = None, loader: Callable[[str], Any] = default_loader,
                  is_valid_file: Optional[Callable[[str], bool]] = None):
         super().__init__(root, transform, target_transform, loader, is_valid_file)
-        self.imgs = self.samples
         self.overfit = False
         self._fixed_batch_size = None
 

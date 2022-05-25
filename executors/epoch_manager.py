@@ -86,7 +86,7 @@ class EpochManager(object):
 
             predictions = self.model(images.to(self.device))
 
-            one_hots = F.one_hot(targets, num_classes=predictions.shape[1])
+            one_hots = F.one_hot(targets, num_classes=self.cfg.out_features)
 
             if calc_metrics:
                 self._calc_batch_metrics(predictions, one_hots, phase, debug)

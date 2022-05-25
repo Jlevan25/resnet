@@ -1,5 +1,8 @@
 import os
 import sys
+
+import numpy as np
+import torch
 from torch import nn
 from torch import optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -25,6 +28,11 @@ cfg = Config(ROOT_DIR=ROOT, DATASET_DIR=DATASET_ROOT,
 model_cfg = Resnet50Config(in_channels=3, out_features=cfg.out_features)
 
 train_key, valid_key, test_key = 'train', 'valid', 'test'
+
+if cfg.seed is not None:
+    np.random.seed(cfg.seed)
+    torch.manual_seed(cfg.seed)
+    torch.cuda.manual_seed(cfg.seed)
 
 jitter_param = (0.6, 1.4)
 norm = [transforms.ToTensor(),

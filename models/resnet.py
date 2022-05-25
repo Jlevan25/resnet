@@ -1,4 +1,3 @@
-from torchsummary import summary
 from torch import nn
 import torch
 from configs.block_config import BlockConfig

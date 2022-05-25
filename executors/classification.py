@@ -22,7 +22,6 @@ cfg = Config(ROOT_DIR=ROOT, DATASET_DIR=DATASET_ROOT,
              debug=True, show_each=100,
              seed=None)
 
-
 model_cfg = Resnet50Config(in_channels=3, out_features=cfg.out_features)
 
 train_key, valid_key, test_key = 'train', 'valid', 'test'
@@ -55,10 +54,10 @@ if cfg.overfit:
 else:
     shuffle = True
 
-dataloaders = {train_key: DataLoader(datasets_dict[train_key],
-                                     batch_size=cfg.batch_size, shuffle=shuffle),
-               valid_key: DataLoader(datasets_dict[valid_key],
-                                     batch_size=cfg.batch_size)}
+dataloaders_dict = {train_key: DataLoader(datasets_dict[train_key],
+                                          batch_size=cfg.batch_size, shuffle=shuffle),
+                    valid_key: DataLoader(datasets_dict[valid_key],
+                                          batch_size=cfg.batch_size)}
 
 model = Resnet(model_cfg).to(cfg.device)
 
@@ -77,7 +76,7 @@ epoch_manager = EpochManager(model=model,
                              criterion=criterion,
                              optimizer=optimizer,
                              writer=writer,
-                             dataloaders=dataloaders,
+                             dataloaders=dataloaders_dict,
                              cfg=cfg,
                              scheduler=scheduler,
                              metrics=metrics,
@@ -89,6 +88,7 @@ for epoch in range(epochs):
     epoch_manager.train(epoch)
     epoch_manager.save_model(epoch)
 
-    epoch_manager.writer.add_scalar(f'scheduler lr',
-                                    epoch_manager.optimizer.param_groups[0]['lr'], epoch)
+    for i, param_group in enumerate(epoch_manager.optimizer.param_groups):
+        epoch_manager.writer.add_scalar(f'scheduler lr/param_group{i}',
+                                        param_group['lr'], epoch)
     epoch_manager.validation(epoch)

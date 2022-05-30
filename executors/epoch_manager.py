@@ -68,7 +68,7 @@ class EpochManager:
             if debug:
                 metric_values[metric_values < 0] = 0.
                 if self.cfg.write_by_class_metrics:
-                    print("{}: {}".format(metric_name, list(metric_values)))
+                    print("{}: {}".format(metric_name, metric_values.tolist()))
 
                 print("Mean {}: {}".format(metric_name, mean_value))
 

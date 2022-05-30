@@ -20,8 +20,8 @@ class _ByClassMetric(Metric, ABC):
     def __init__(self, classes: int):
         super().__init__()
         self.classes = classes
-        self._corrects = torch.tensor([0. for _ in range(self.classes)])
-        self._totals = torch.tensor([0. for _ in range(self.classes)])
+        self._corrects = torch.zeros(self.classes)
+        self._totals = torch.zeros(self.classes)
 
     def get_epoch_metric(self):
         mean = check_zero_divide(self._corrects, self._totals)

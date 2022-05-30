@@ -1,7 +1,6 @@
 from abc import abstractmethod, ABC
 
 import torch
-from torch import nn
 from utils import check_negative_divide
 
 
@@ -30,6 +29,6 @@ class _ByClassMetric(Metric, ABC):
         return mean
 
     def _check_negative(self, index):
-        if self._totals[index] < 0:
+        if any(self._totals[index] < 0):
             self._corrects[index] = 0
             self._totals[index] = 0

@@ -2,7 +2,7 @@ from abc import abstractmethod, ABC
 
 import torch
 from torch import nn
-from utils import check_zero_divide
+from utils import check_negative_divide
 
 
 class Metric:
@@ -20,11 +20,16 @@ class _ByClassMetric(Metric, ABC):
     def __init__(self, classes: int):
         super().__init__()
         self.classes = classes
-        self._corrects = torch.zeros(self.classes)
-        self._totals = torch.zeros(self.classes)
+        self._corrects = -torch.ones(self.classes)
+        self._totals = -torch.ones(self.classes)
 
     def get_epoch_metric(self):
-        mean = check_zero_divide(self._corrects, self._totals)
-        self._corrects *= 0
-        self._totals *= 0
+        mean = check_negative_divide(self._corrects, self._totals)
+        self._corrects = -torch.ones(self.classes)
+        self._totals = -torch.ones(self.classes)
         return mean
+
+    def _check_negative(self, index):
+        if self._totals[index] < 0:
+            self._corrects[index] = 0
+            self._totals[index] = 0

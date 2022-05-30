@@ -1,5 +1,5 @@
 import os.path
-from typing import Iterator
+from typing import Iterator, Union, List
 
 import torch
 from torch import tensor
@@ -13,7 +13,7 @@ class EpochManager:
     def __init__(self,
                  model, optimizer, criterion, cfg,
                  writer=None,
-                 scheduler=None,
+                 scheduler: Union[List, ] = None,
                  class_names=None,
                  dataloaders_dict=None,
                  metrics: dict = None):
@@ -21,7 +21,14 @@ class EpochManager:
         self.model = model
 
         self.optimizer = optimizer
-        self.scheduler = scheduler
+        if hasattr(scheduler, '__len__'):
+            self._scheduler_list = scheduler
+            self._scheduler_index = 0
+            self.scheduler = scheduler[0]
+        else:
+            self._scheduler_list = None
+            self.scheduler = scheduler
+
         self.criterion = criterion
         self.metrics = metrics
         self.device = self.cfg.device
@@ -31,6 +38,13 @@ class EpochManager:
         self.dataloaders = dataloaders_dict if dataloaders_dict is not None else dict()
 
         self._global_step = dict()
+
+    def switch_scheduler(self, index=None):
+        if index is None:
+            self._scheduler_index += 1 if self._scheduler_index <= len(self._scheduler_list) else 0
+        else:
+            self._scheduler_index = index
+        self.scheduler = self._scheduler_list[self._scheduler_index]
 
     def _get_global_step(self, data_type):
         self._global_step[data_type] = -1
@@ -115,20 +129,26 @@ class EpochManager:
             self._calc_epoch_metrics(stage)
 
     def train(self, stage_key, i_epoch):
+        self.model.train()
         for batch_loss in self._epoch_generator(stage=stage_key, epoch=i_epoch):
             self.optimizer.zero_grad()
             batch_loss.backward()
             self.optimizer.step()
 
+        if self.scheduler is not None:
+            self.scheduler.step()
+
     @torch.no_grad()
     def validation(self, stage_key, i_epoch):
+        self.model.eval()
         for batch_loss in self._epoch_generator(stage=stage_key, epoch=i_epoch):
-            if self.scheduler is not None:
-                self.scheduler.step(batch_loss.detach())
+            ...
 
     @torch.no_grad()
     def test(self, stage_key):
-        self._epoch_generator(stage=stage_key)
+        self.model.eval()
+        for batch_loss in self._epoch_generator(stage=stage_key):
+            ...
 
     def save_model(self, epoch, path=None):
         path = self.cfg.SAVE_PATH if path is None else path

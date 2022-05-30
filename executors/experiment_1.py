@@ -12,6 +12,8 @@ from executors.epoch_manager import EpochManager
 from configs import Config, Resnet50Config
 from models import Resnet
 from metrics import BalancedAccuracy
+from datasets import OverfitModeDecorator
+from utils import split_params4weight_decay
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATASET_ROOT = os.path.join(ROOT, 'datasets')
@@ -49,15 +51,16 @@ image_transforms = {train_key: transforms.Compose([transforms.RandomResizedCrop(
                                                    *norm])}
 target_transforms = {}
 
-datasets_dict = {k: datasets.ImageFolder(root=os.path.join(DATASET_ROOT, train_key),
+datasets_dict = {k: datasets.ImageFolder(root=os.path.join(DATASET_ROOT, k),
                                          transform=image_transforms[k] if k in image_transforms else None,
                                          target_transform=target_transforms[k] if k in target_transforms else None)
                  for k in keys}
 
 if cfg.overfit:
     shuffle = False
-    for dataset in datasets_dict.values():
-        dataset.__len__ = lambda: cfg.batch_size
+    overfit_mode = OverfitModeDecorator(cfg.batch_size)
+    for key in datasets_dict.keys():
+        datasets_dict[key] = overfit_mode(datasets_dict[key])
 else:
     shuffle = True
 
@@ -70,7 +73,7 @@ model = Resnet(model_cfg).to(cfg.device)
 
 # weight decay
 if cfg.weight_decay is not None:
-    wd_params, no_wd_params = model.split_params4weight_decay()
+    wd_params, no_wd_params = split_params4weight_decay(model)
     params = [dict(params=wd_params, weight_decay=cfg.weight_decay),
               dict(params=no_wd_params)]
 else:
@@ -89,10 +92,12 @@ epoch_manager = EpochManager(dataloaders_dict=dataloaders_dict, class_names=clas
                              writer=writer, metrics=metrics_dict)
 
 epochs = 20
+save_each = 5
 
 for epoch in range(epochs):
     epoch_manager.train(train_key, epoch)
-    epoch_manager.save_model(epoch)
+    if epoch % save_each == 0 and epoch != 0:
+        epoch_manager.save_model(epoch)
 
     for i, param_group in enumerate(epoch_manager.optimizer.param_groups):
         epoch_manager.writer.add_scalar(f'scheduler lr/param_group{i}',

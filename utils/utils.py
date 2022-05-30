@@ -24,6 +24,17 @@ def sum_except_dim(x, dim):
     return x.transpose(dim, 0).reshape(x.shape[dim], -1).sum(1)
 
 
+def check_negative_divide(x, y):
+    if any(y < 0):
+        out = -torch.ones_like(x)
+        indexes = y > 0
+        out[indexes] = x[indexes] / y[indexes]
+    else:
+        out = x / y
+
+    return out
+
+
 def check_zero_divide(x, y):
     if any(y == 0):
         out = torch.zeros_like(x)

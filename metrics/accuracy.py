@@ -1,4 +1,4 @@
-from utils import sum_except_dim, check_zero_divide
+from utils import sum_except_dim, check_zero_divide, check_negative_divide
 
 from metrics.metric import _ByClassMetric
 from torch.nn import functional as F
@@ -13,7 +13,12 @@ class BalancedAccuracy(_ByClassMetric):
         else:
             targets = targets.round()
 
-        self._corrects += sum_except_dim(predictions * targets, dim=1).type(self._corrects.dtype)
-        self._totals += sum_except_dim(targets, dim=1).type(self._totals.dtype)
+        correct = sum_except_dim(predictions * targets, dim=1).type(self._corrects.dtype)
+        total = sum_except_dim(targets, dim=1).type(self._totals.dtype)
 
-        return check_zero_divide(self._corrects, self._totals)
+        self._check_negative(total > 0)
+
+        self._corrects += correct
+        self._totals += total
+
+        return check_negative_divide(self._corrects, self._totals)

@@ -12,7 +12,35 @@ class DatasetDecorator:
         raise NotImplementedError()
 
 
-class MixUpDatasetDecorator(DatasetDecorator):
+class _OvefitedDataset:
+    def __init__(self, batch_size, dataset):
+        self._batch_size = batch_size
+        self._dataset = dataset
+        self._dataset.__len__ = lambda: batch_size
+
+    def __getitem__(self, item):
+        return self._dataset[item]
+
+    def __len__(self):
+        return self._batch_size
+
+    def __repr__(self):
+        return repr(self._dataset)
+
+
+class OverfitModeDecorator(DatasetDecorator):
+    def __init__(self, batch_size):
+        self.batch_size = batch_size
+
+    def decorate(self, dataset):
+        _OvefitedDataset.__name__ = 'Ovefit' + type(dataset).__name__
+        overfit_dataset = _OvefitedDataset(self.batch_size, dataset)
+        for k, v in dataset.__dict__.items():
+            overfit_dataset.__dict__[k] = v
+        return overfit_dataset
+
+
+class MixUpDecorator(DatasetDecorator):
 
     def __init__(self, num_classes: int, alpha: float = 1.0):
         self.num_classes = num_classes
@@ -40,4 +68,3 @@ class MixUpDatasetDecorator(DatasetDecorator):
         dataset.__getitem__ = wrapper
 
         return dataset
-

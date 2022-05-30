@@ -1,1 +1,1 @@
-from datasets.dataset_decorator import DatasetDecorator, MixUpDatasetDecorator
+from datasets.dataset_decorator import DatasetDecorator, MixUpDecorator, OverfitModeDecorator

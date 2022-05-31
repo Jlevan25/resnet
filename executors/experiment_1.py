@@ -16,7 +16,7 @@ from datasets import OverfitModeDecorator
 from utils import split_params4weight_decay
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATASET_ROOT = os.path.join(ROOT, 'datasets')
+DATASET_ROOT = os.path.join(ROOT, 'datasets', 'data')
 
 cfg = Config(ROOT_DIR=ROOT, DATASET_DIR=DATASET_ROOT,
              dataset_name='AlmostCifar', out_features=12,

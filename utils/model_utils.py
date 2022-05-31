@@ -1,6 +1,14 @@
 from torch import nn
 
 
+def init_params(model, layer_name, weight_init_def, bias_init_def = None):
+    for module in model.modules():
+        if layer_name.lower() in type(module).__name__.lower():
+            weight_init_def(module.weight)
+            if bias_init_def is not None:
+                bias_init_def(module.bias)
+
+
 def split_params4weight_decay(model):
     wd_params, no_wd = [], []
     for name, param in model.named_parameters():
@@ -14,8 +22,6 @@ def split_params4weight_decay(model):
 def zero_gamma_resnet(model):
     for name, module in model.__dict__['_modules'].items():
         if 'stage_' in name:
-            # module_blocks = [list(m.block_layers)[::-1] for m in module]
-            # last_batch_norm = [[layer for layer in m if 'BatchNorm' in type(layer).__name__][0] for m in module_blocks]
             last_batch_norm = [[layer for layer in blocks.block_layers if 'BatchNorm' in type(layer).__name__][-1]
                                for blocks in module]
 

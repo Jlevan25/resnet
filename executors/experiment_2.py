@@ -17,7 +17,7 @@ from transforms import LabelSmoothing
 from utils import split_params4weight_decay, zero_gamma_resnet, LinearStochasticDepth
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATASET_ROOT = os.path.join(ROOT, 'datasets')
+DATASET_ROOT = os.path.join(ROOT, 'datasets', 'data')
 
 cfg = Config(ROOT_DIR=ROOT, DATASET_DIR=DATASET_ROOT,
              dataset_name='AlmostCifar', out_features=12,
